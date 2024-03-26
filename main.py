@@ -10,16 +10,6 @@ import platform
 import datetime
 
 # ラベルとURLのペア
-items = {
-    '日間_総合_すべて':           "https://yomou.syosetu.com/rank/list/type/daily_total/",       
-    '日間_総合_短編':             "https://yomou.syosetu.com/rank/list/type/daily_t/",          
-    '日間_総合_完結済':           "https://yomou.syosetu.com/rank/list/type/daily_er/",
-    '日間_総合_連載中':           "https://yomou.syosetu.com/rank/list/type/daily_r/",
-    '日間_異世界恋愛_すべて':     "https://yomou.syosetu.com/rank/genrelist/type/daily_101/",
-    '日間_異世界恋愛_短編':       "https://yomou.syosetu.com/rank/genrelist/type/daily_101_t/",
-    '日間_異世界恋愛_完結済':     "https://yomou.syosetu.com/rank/genrelist/type/daily_101_er/",
-    '日間_異世界恋愛_連載中':     "https://yomou.syosetu.com/rank/genrelist/type/daily_101_r/",
-}
 with open('config.json', 'r', encoding='utf-8') as f:
     config = json.load(f)
 
@@ -28,14 +18,12 @@ interval = config['interval']
 
 # ChromeDriverを起動
 options = Options()
+options.add_argument('--window-size=800,600')
 options.add_argument('--headless')
 options.add_argument('log-level=3')
 browser = webdriver.Chrome(options)
 
-# スクリーンショットを撮る間隔（秒）
-interval = 60 * 30 # 30分
-
-count = 1
+browser.execute_script("document.body.style.overflow = 'hidden';")
 
 def capture(label, url):
     now = datetime.datetime.now()
@@ -52,7 +40,7 @@ def capture(label, url):
     screenshots = []
     for offset in range(0, page_height, window_height):
         browser.execute_script(f"window.scrollTo(0, {offset});")
-        time.sleep(1)  # スクロール後の読み込み待ち
+        time.sleep(5)  # スクロール後の読み込み待ち
         screenshots.append(browser.get_screenshot_as_png())
     
     # スクリーンショットを結合してページ全体のスクリーンショットを作成
