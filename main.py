@@ -1,4 +1,5 @@
 import time
+import json
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -19,6 +20,11 @@ items = {
     '日間_異世界恋愛_完結済':     "https://yomou.syosetu.com/rank/genrelist/type/daily_101_er/",
     '日間_異世界恋愛_連載中':     "https://yomou.syosetu.com/rank/genrelist/type/daily_101_r/",
 }
+with open('config.json', 'r', encoding='utf-8') as f:
+    config = json.load(f)
+
+items = config['items']
+interval = config['interval']
 
 # ChromeDriverを起動
 options = Options()
