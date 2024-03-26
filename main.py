@@ -27,38 +27,23 @@ browser = webdriver.Chrome(options)
 
 browser.execute_script("document.body.style.overflow = 'hidden';")
 
-def save_screenshot(driver, file_path, keywords, is_full_size=False):
-    # スクリーンショット設定
-    screenshot_config = {
-        "captureBeyondViewport": is_full_size,
-    }
-
-    # スクリーンショット取得
-    base64_image = driver.execute_cdp_cmd("Page.captureScreenshot", screenshot_config)
-
-    # Base64をデコードしてPILイメージに変換
-    image = Image.open(BytesIO(base64.b64decode(base64_image['data'])))
-
+def save_screenshot(driver, file_path, keywords):
     found = False
     for keyword in keywords:
         keyword_elements = driver.find_elements(By.XPATH, f"//*[contains(text(), '{keyword}')]/../../../..")
-        for keyword_element in keyword_elements:
+        for i, keyword_element in enumerate(keyword_elements):
             found = True
-            # 要素の位置とサイズを取得
-            location = keyword_element.location
-            size = keyword_element.size
+            # 要素のスクリーンショットを取得
+            element_screenshot = keyword_element.screenshot_as_png
+            image = Image.open(BytesIO(element_screenshot))
 
             # 作品枠全体に太い赤線の枠を描画
             draw = ImageDraw.Draw(image)
-            left = location['x']
-            top = location['y']
-            right = location['x'] + size['width']
-            bottom = location['y'] + size['height']
-            draw.rectangle((left, top, right, bottom), outline='red', width=5)
+            draw.rectangle((0, 0, image.width, image.height), outline='red', width=5)
 
-    if found:
-        # ファイル書き出し
-        image.save(file_path)
+            # 要素のスクリーンショットを保存
+            image.save(f"{file_path.split('.')[0]}_{i+1}.png")
+
     return found
 
 def capture(label, url):
@@ -79,8 +64,7 @@ def capture(label, url):
     found = save_screenshot(
         browser, 
         f"{out_dir}/スクリーンショット_{now_string}.png",
-        keywords,
-        is_full_size=True
+        keywords
     )
     if found:
         print(f"スクリーンショット {label} ({now_string}) をキャプチャしました")
