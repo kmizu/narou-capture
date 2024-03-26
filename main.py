@@ -27,13 +27,21 @@ browser = webdriver.Chrome(options)
 
 browser.execute_script("document.body.style.overflow = 'hidden';")
 
-def save_screenshot(driver, file_path, keywords):
+def save_screenshot(driver, label, directory_path, keywords):
     found = False
+    #visit_set = set()
     for keyword in keywords:
         keyword_elements = driver.find_elements(By.XPATH, f"//*[contains(text(), '{keyword}')]/../../../..")
         for i, keyword_element in enumerate(keyword_elements):
             found = True
             # 要素のスクリーンショットを取得
+            #if keyword_element in visit_set:
+            #    continue
+            #visit_set.add(keyword_element)
+            rank = keyword_element.find_element(By.XPATH, f".//div[@class='p-ranklist-item__place c-rank-place']/span")
+            author = keyword_element.find_element(By.XPATH, f".//div[@class='p-ranklist-item__author']/a")
+            print("ランキング: " + rank.text + "位")
+            print("作者: " + author.text)
             element_screenshot = keyword_element.screenshot_as_png
             image = Image.open(BytesIO(element_screenshot))
 
@@ -41,14 +49,16 @@ def save_screenshot(driver, file_path, keywords):
             draw = ImageDraw.Draw(image)
             draw.rectangle((0, 0, image.width, image.height), outline='red', width=5)
 
-            # 要素のスクリーンショットを保存
-            image.save(f"{file_path.split('.')[0]}_{i+1}.png")
+            now = datetime.datetime.now()
+            now_text = now.strftime('%Y-%m-%d-%H%M')
 
-    return found
+            path = f"{directory_path}/rank-{rank.text}_author-{author.text}_{now_text}.png"
+            image.save(path)
+            return path
+
+    return None
 
 def capture(label, url):
-    now = datetime.datetime.now()
-    now_string = now.strftime('%Y-%m-%d-%H%M')
     browser.get(url)
     browser.refresh()
 
@@ -61,13 +71,14 @@ def capture(label, url):
         out_dir = f"{home_path}/Dropbox/gacha_contest/linux/{label}"
     os.makedirs(out_dir, exist_ok=True)
 
-    found = save_screenshot(
+    path = save_screenshot(
         browser, 
-        f"{out_dir}/スクリーンショット_{now_string}.png",
+        label,
+        f"{out_dir}",
         keywords
     )
-    if found:
-        print(f"スクリーンショット {label} ({now_string}) をキャプチャしました")
+    if path:
+        print(f"スクリーンショット {path} をキャプチャしました")
 
 while True:
     print("キャプチャ開始：")
