@@ -4,7 +4,7 @@ import base64
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-from PIL import Image
+from PIL import Image, ImageDraw
 from io import BytesIO
 import os
 import platform
@@ -16,6 +16,7 @@ with open('config.json', 'r', encoding='utf-8') as f:
 
 items = config['items']
 interval = config['interval']
+keywords = config['keywords']
 
 # ChromeDriverを起動
 options = Options()
@@ -26,19 +27,39 @@ browser = webdriver.Chrome(options)
 
 browser.execute_script("document.body.style.overflow = 'hidden';")
 
-def save_screenshot(driver, file_path, is_full_size=False):
+def save_screenshot(driver, file_path, keywords, is_full_size=False):
     # スクリーンショット設定
     screenshot_config = {
-        # Trueの場合スクロールで隠れている箇所も含める、Falseの場合表示されている箇所のみ
         "captureBeyondViewport": is_full_size,
     }
 
     # スクリーンショット取得
     base64_image = driver.execute_cdp_cmd("Page.captureScreenshot", screenshot_config)
 
-    # ファイル書き出し
-    with open(file_path, "wb") as fh:
-        fh.write(base64.urlsafe_b64decode(base64_image["data"]))
+    # Base64をデコードしてPILイメージに変換
+    image = Image.open(BytesIO(base64.b64decode(base64_image['data'])))
+
+    found = False
+    for keyword in keywords:
+        keyword_elements = driver.find_elements(By.XPATH, f"//*[contains(text(), '{keyword}')]/../../../..")
+        for keyword_element in keyword_elements:
+            found = True
+            # 要素の位置とサイズを取得
+            location = keyword_element.location
+            size = keyword_element.size
+
+            # 作品枠全体に太い赤線の枠を描画
+            draw = ImageDraw.Draw(image)
+            left = location['x']
+            top = location['y']
+            right = location['x'] + size['width']
+            bottom = location['y'] + size['height']
+            draw.rectangle((left, top, right, bottom), outline='red', width=5)
+
+    if found:
+        # ファイル書き出し
+        image.save(file_path)
+    return found
 
 def capture(label, url):
     now = datetime.datetime.now()
@@ -54,11 +75,15 @@ def capture(label, url):
         home_path = os.environ['HOME']
         out_dir = f"{home_path}/Dropbox/gacha_contest/linux/{label}"
     os.makedirs(out_dir, exist_ok=True)
-    save_screenshot(
+
+    found = save_screenshot(
         browser, 
         f"{out_dir}/スクリーンショット_{now_string}.png",
-        is_full_size=True)
-    print(f"スクリーンショット {label} ({now_string}) をキャプチャしました")
+        keywords,
+        is_full_size=True
+    )
+    if found:
+        print(f"スクリーンショット {label} ({now_string}) をキャプチャしました")
 
 while True:
     print("キャプチャ開始：")
