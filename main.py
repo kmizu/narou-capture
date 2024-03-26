@@ -57,7 +57,7 @@ def capture(label, url):
         offset += image.size[1]
     
     # ページ全体のスクリーンショットを保存
-    out_dir = f"~/Dropbox/gacha_contest/{label}"
+    out_dir = f"C:/Users/Mizushima/Dropbox/gacha_contest/{label}"
     os.makedirs(out_dir, exist_ok=True)
     full_screenshot.save(f"{out_dir}/スクリーンショット_{now_string}.png")
     print(f"スクリーンショット {label} ({now_string}) をキャプチャしました")
