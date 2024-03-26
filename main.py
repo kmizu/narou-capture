@@ -67,7 +67,5 @@ while True:
         capture(label + "_51_100", url + "?p=2")
     print("キャプチャ終了：")
     
-    count += 1
-    
     # 指定した間隔だけ待機
     time.sleep(interval)
