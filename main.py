@@ -52,7 +52,7 @@ def capture(label, url):
     screenshots = []
     for offset in range(0, page_height, window_height):
         browser.execute_script(f"window.scrollTo(0, {offset});")
-        time.sleep(1)  # スクロール後の読み込み待ち
+        time.sleep(3)  # スクロール後の読み込み待ち
         screenshots.append(browser.get_screenshot_as_png())
     
     # スクリーンショットを結合してページ全体のスクリーンショットを作成
