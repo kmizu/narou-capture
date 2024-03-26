@@ -5,6 +5,7 @@ from selenium.webdriver.common.by import By
 from PIL import Image
 from io import BytesIO
 import os
+import platform
 import datetime
 
 # ラベルとURLのペア
@@ -56,9 +57,13 @@ def capture(label, url):
         full_screenshot.paste(image, (0, offset))
         offset += image.size[1]
     
-    # ページ全体のスクリーンショットを保存
-    home_path = os.environ['HOMEPATH']
-    out_dir = f"{home_path}/Dropbox/gacha_contest/{label}"
+    # OSを判別して出力ディレクトリを設定
+    if platform.system() == 'Windows':
+        home_path = os.environ['HOMEPATH']
+        out_dir = f"{home_path}/Dropbox/gacha_contest/{label}"
+    else:  # Linux の場合
+        home_path = os.environ['HOME']
+        out_dir = f"{home_path}/Dropbox/gacha_contest/linux/{label}"
     os.makedirs(out_dir, exist_ok=True)
     full_screenshot.save(f"{out_dir}/スクリーンショット_{now_string}.png")
     print(f"スクリーンショット {label} ({now_string}) をキャプチャしました")
