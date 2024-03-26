@@ -29,15 +29,14 @@ browser.execute_script("document.body.style.overflow = 'hidden';")
 
 def save_screenshot(driver, label, directory_path, keywords):
     found = False
-    #visit_set = set()
+    visit_set = set()
     for keyword in keywords:
-        keyword_elements = driver.find_elements(By.XPATH, f"//*[contains(text(), '{keyword}')]/../../../..")
+        keyword_elements = driver.find_elements(By.XPATH, f"//*[contains(text(), '{keyword}')]/../../..")
         for i, keyword_element in enumerate(keyword_elements):
             found = True
-            # 要素のスクリーンショットを取得
-            #if keyword_element in visit_set:
-            #    continue
-            #visit_set.add(keyword_element)
+            if keyword_element in visit_set:
+                continue
+            visit_set.add(keyword_element)
             rank = keyword_element.find_element(By.XPATH, f".//div[@class='p-ranklist-item__place c-rank-place']/span")
             author = keyword_element.find_element(By.XPATH, f".//div[@class='p-ranklist-item__author']/a")
             print("ランキング: " + rank.text + "位")
@@ -47,7 +46,7 @@ def save_screenshot(driver, label, directory_path, keywords):
 
             # 作品枠全体に太い赤線の枠を描画
             draw = ImageDraw.Draw(image)
-            draw.rectangle((0, 0, image.width, image.height), outline='red', width=5)
+            draw.rectangle((0, 0, image.width, image.height), outline='red', width=3)
 
             now = datetime.datetime.now()
             now_text = now.strftime('%Y-%m-%d-%H%M')
