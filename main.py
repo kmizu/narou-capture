@@ -1,5 +1,6 @@
 import time
 import json
+import base64
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -25,32 +26,26 @@ browser = webdriver.Chrome(options)
 
 browser.execute_script("document.body.style.overflow = 'hidden';")
 
+def save_screenshot(driver, file_path, is_full_size=False):
+    # スクリーンショット設定
+    screenshot_config = {
+        # Trueの場合スクロールで隠れている箇所も含める、Falseの場合表示されている箇所のみ
+        "captureBeyondViewport": is_full_size,
+    }
+
+    # スクリーンショット取得
+    base64_image = driver.execute_cdp_cmd("Page.captureScreenshot", screenshot_config)
+
+    # ファイル書き出し
+    with open(file_path, "wb") as fh:
+        fh.write(base64.urlsafe_b64decode(base64_image["data"]))
+
 def capture(label, url):
     now = datetime.datetime.now()
     now_string = now.strftime('%Y-%m-%d-%H%M')
     browser.get(url)
+    browser.refresh()
 
-    # ページの高さを取得
-    page_height = browser.execute_script("return document.body.scrollHeight")
-    
-    # ウィンドウの高さを取得
-    window_height = browser.execute_script("return window.innerHeight")
-    
-    # スクロール操作を行いながらスクリーンショットを撮る
-    screenshots = []
-    for offset in range(0, page_height, window_height):
-        browser.execute_script(f"window.scrollTo(0, {offset});")
-        time.sleep(5)  # スクロール後の読み込み待ち
-        screenshots.append(browser.get_screenshot_as_png())
-    
-    # スクリーンショットを結合してページ全体のスクリーンショットを作成
-    full_screenshot = Image.new('RGB', (browser.get_window_size()['width'], page_height))
-    offset = 0
-    for screenshot in screenshots:
-        image = Image.open(BytesIO(screenshot))
-        full_screenshot.paste(image, (0, offset))
-        offset += image.size[1]
-    
     # OSを判別して出力ディレクトリを設定
     if platform.system() == 'Windows':
         home_path = os.environ['HOMEPATH']
@@ -59,14 +54,13 @@ def capture(label, url):
         home_path = os.environ['HOME']
         out_dir = f"{home_path}/Dropbox/gacha_contest/linux/{label}"
     os.makedirs(out_dir, exist_ok=True)
-    full_screenshot.save(f"{out_dir}/スクリーンショット_{now_string}.png")
+    save_screenshot(
+        browser, 
+        f"{out_dir}/スクリーンショット_{now_string}.png",
+        is_full_size=True)
     print(f"スクリーンショット {label} ({now_string}) をキャプチャしました")
 
 while True:
-    # ページを更新
-    browser.refresh()
-    print(f"ページをリフレッシュしました")
-
     print("キャプチャ開始：")
     for label, url in items.items():
         capture(label + "_01_050", url + "?p=1")
