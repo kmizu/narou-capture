@@ -27,21 +27,19 @@ browser = webdriver.Chrome(options)
 browser.execute_script("document.body.style.overflow = 'hidden';")
 
 def save_screenshot(driver, label, directory_path, keywords):
-    found = False
-    visit_set = set()
-    for keyword in keywords:
-        driver.refresh()
-        keyword_elements = driver.find_elements(By.XPATH, f"//*[contains(text(), '{keyword}')]/../../..")
-        for i, keyword_element in enumerate(keyword_elements):
-            found = True
-            if keyword_element in visit_set:
-                continue
-            visit_set.add(keyword_element)
-            rank = keyword_element.find_element(By.XPATH, f".//div[contains(@class, 'p-ranklist-item__place')]/span")
-            author = keyword_element.find_element(By.XPATH, f".//div[contains(@class, 'p-ranklist-item__author')]/a")
+    base_elements  = driver.find_elements(By.XPATH, f"//div[contains(@class, 'c-card p-ranklist-item')]")
+    for base_element in base_elements:
+        found = False
+        for keyword in keywords:
+            keyword_elements = base_element.find_elements(By.XPATH, f".//*[contains(text(), '{keyword}')]")
+            for i, keyword_element in enumerate(keyword_elements):
+                found = True
+        if found:
+            rank = base_element.find_element(By.XPATH, f".//div[contains(@class, 'p-ranklist-item__place')]/span")
+            author = base_element.find_element(By.XPATH, f".//div[contains(@class, 'p-ranklist-item__author')]/a")
             print("ランキング: " + rank.text + "位")
             print("作者: " + author.text)
-            element_screenshot = keyword_element.screenshot_as_png
+            element_screenshot = base_element.screenshot_as_png
             image = Image.open(BytesIO(element_screenshot))
 
             # 作品枠全体に太い赤線の枠を描画
@@ -51,7 +49,7 @@ def save_screenshot(driver, label, directory_path, keywords):
             now = datetime.datetime.now()
             now_text = now.strftime('%Y-%m-%d-%H%M')
 
-            path = f"{directory_path}/{label}_rank-{rank.text}_author-{author.text}_{now_text}.png"
+            path = f"{directory_path}/{label}_{rank.text}位_作者-{author.text}_{now_text}.png"
             image.save(path)
             return path
 
